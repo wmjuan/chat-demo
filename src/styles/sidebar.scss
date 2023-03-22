@@ -72,7 +72,7 @@
     .submenu-title-noDropdown,
     .el-submenu__title {
       &:hover {
-        background-color: #285ce1 !important;
+        background-color: #e7f8f6 !important;
       }
     }
 
@@ -86,7 +86,7 @@
       background-color: $subMenuBg !important;
 
       &:hover {
-        background-color: $subMenuHover !important;
+        background-color: #26b8a6 !important;
       }
     }
   }
@@ -201,7 +201,7 @@
   .el-menu-item {
     &:hover {
       // you can use $subMenuHover
-      background-color: $menuHover !important;
+      background-color: #26b8a6 !important;
     }
   }
 

@@ -90,43 +90,43 @@ export default {
     })
   },
   mounted() {
-    // 监听悬浮拖拽区域
-    // this.$nextTick(() => {
-    //   // 获取DOM元素
-    //   const smallBox = this.$refs.fu
-    //   const bigBox = document.querySelector('.dashboard')
-    //   //  绑定事件
-    //   function handleMove(e) {
-    //     console.log(11)
-    //     // 计算  x  y
-    //     var e = e || window.event
-    //     var x = e.clientX - bigBox.offsetLeft - 20
-    //     var y = e.clientY - bigBox.offsetTop - 20
-    //     //  判断上 左
-    //     if (x <= 0) {
-    //       x = 0
-    //     }
-    //     if (y <= 0) {
-    //       y = 0
-    //     }
-    //     // 判断右 下
-    //     if (x >= bigBox.offsetWidth - smallBox.offsetWidth) {
-    //       x = bigBox.offsetWidth - smallBox.offsetWidth + 48
-    //     }
-    //     if (y >= bigBox.offsetHeight - smallBox.offsetHeight) {
-    //       y = bigBox.offsetHeight - smallBox.offsetHeight + 48
-    //     }
-    //     smallBox.style.top = y + 'px'
-    //     smallBox.style.left = x + 'px'
-    //   }
-    //   smallBox.addEventListener('mousedown', function(e) {
-    //     document.addEventListener('mousemove', handleMove)
-    //   })
-    //   document.addEventListener('mouseup', function() {
-    //     document.removeEventListener('mousemove', handleMove)
-    //   })
-    // })
-
+  //   // 监听悬浮拖拽区域
+  //   // this.$nextTick(() => {
+  //   //   // 获取DOM元素
+  //   //   const smallBox = this.$refs.fu
+  //   //   const bigBox = document.querySelector('.dashboard')
+  //   //   //  绑定事件
+  //   //   function handleMove(e) {
+  //   //     console.log(11)
+  //   //     // 计算  x  y
+  //   //     var e = e || window.event
+  //   //     var x = e.clientX - bigBox.offsetLeft - 20
+  //   //     var y = e.clientY - bigBox.offsetTop - 20
+  //   //     //  判断上 左
+  //   //     if (x <= 0) {
+  //   //       x = 0
+  //   //     }
+  //   //     if (y <= 0) {
+  //   //       y = 0
+  //   //     }
+  //   //     // 判断右 下
+  //   //     if (x >= bigBox.offsetWidth - smallBox.offsetWidth) {
+  //   //       x = bigBox.offsetWidth - smallBox.offsetWidth + 48
+  //   //     }
+  //   //     if (y >= bigBox.offsetHeight - smallBox.offsetHeight) {
+  //   //       y = bigBox.offsetHeight - smallBox.offsetHeight + 48
+  //   //     }
+  //   //     smallBox.style.top = y + 'px'
+  //   //     smallBox.style.left = x + 'px'
+  //   //   }
+  //   //   smallBox.addEventListener('mousedown', function(e) {
+  //   //     document.addEventListener('mousemove', handleMove)
+  //   //   })
+  //   //   document.addEventListener('mouseup', function() {
+  //   //     document.removeEventListener('mousemove', handleMove)
+  //   //   })
+  //   // })
+  //
     const box = this.$refs.fu
     // 获取浏览器的尺寸
     var window_width = document.body.clientWidth || document.documentElement.clientWidth
@@ -152,13 +152,14 @@ export default {
         // 鼠标一直在中间位置
         var x = e.pageX - box.offsetWidth / 2
         var y = e.pageY - box.offsetHeight / 2
+        // debugger
         // 判断左边和上边
-        if (x <= 50) {
+        if (x <= 0) {
           x = 0
         } else if (x >= window_width - box_width - 50) {
           x = window_width - box_width
         }
-        if (y <= 50) {
+        if (y <= 0) {
           y = 0
         } else if (y >= window_height - box_height - 50) {
           y = window_height - box_height
@@ -173,6 +174,7 @@ export default {
         // 2-5 改变div的位置
         box.style.left = x + 'px'
         box.style.top = y + 'px'
+        return false
       }
       // 2-3 绑定抬起事件 取消移动事件
       box.onmouseup = function() {
