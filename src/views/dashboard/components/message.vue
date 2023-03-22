@@ -9,7 +9,7 @@
             <!--            <i class="el-icon-edit" @click="changeUser(item)"/>-->
             <el-popconfirm
               title="确定删除吗？"
-              @onConfirm="handleConfirm(item.id)"
+              @onConfirm="handleConfirm(index)"
             >
               <i slot="reference" class="el-icon-delete" />
             </el-popconfirm>
@@ -37,11 +37,11 @@
             </el-dialog>
             <el-popconfirm
               title="确定删除吗？"
-              @onConfirm="handleConfirm(item.id)"
+              @onConfirm="handleConfirm(index)"
             >
               <i slot="reference" class="el-icon-delete" />
             </el-popconfirm>
-            <i class="el-icon-edit" @click="changeText(item)" />
+            <i class="el-icon-edit" @click="changeText(index)" />
           </div>
         </div>
       </div>
@@ -90,6 +90,9 @@ export default {
       let arr = []
       history(this.msgId).then(res => {
         arr = res.data
+        arr = this.DateParse(arr)
+        this.lists = arr
+        item = arr[index]
         for (let i = 0; i < arr.length; i++) {
           if (item.id === arr[i].id) {
             this.$copyText(item.assistant_content).then(() => {
@@ -100,10 +103,22 @@ export default {
         }
       })
     },
+    // 获取历史数据
+    getList(id) {
+      let arr = []
+      history(id).then(res => {
+        arr = res.data
+        arr = this.DateParse(arr)
+        this.lists = arr
+      })
+    },
     userClickCopy(item, index) {
       let arr = []
       history(this.msgId).then(res => {
         arr = res.data
+        arr = this.DateParse(arr)
+        this.lists = arr
+        item = arr[index]
         for (let i = 0; i < arr.length; i++) {
           if (item.id === arr[i].id) {
             this.$copyText(item.user_content).then(() => {
@@ -143,15 +158,7 @@ export default {
           return
         } else {
           if (data[0].updated_at.indexOf('.') !== -1) {
-            // 把带T的时间转为正常的时间格式 yyyy-mm-dd hh:mm:ss
-            for (let i = 0; i < data.length; i++) {
-              const time = data[i].updated_at
-              if (time) {
-                const yyyyMMdd = time.split('T')[0]
-                const hhmmss = time.split('T')[1].split('.')[0]
-                data[i].updated_at = yyyyMMdd + ' ' + hhmmss
-              }
-            }
+            data = this.DateParse(data)
           }
           this.lists = data
         }
@@ -160,6 +167,19 @@ export default {
         // 追加lists最后一条数据
         this.lists[this.lists.length - 1]['assistant_content'] = JSON.parse(data)['content']
       })
+    },
+    // 时间格式处理方法，后续可以放到一个公共方法里
+    DateParse(data) {
+      // 把带T的时间转为正常的时间格式 yyyy-mm-dd hh:mm:ss
+      for (let i = 0; i < data.length; i++) {
+        const time = data[i].updated_at
+        if (time) {
+          const yyyyMMdd = time.split('T')[0]
+          const hhmmss = time.split('T')[1].split('.')[0]
+          data[i].updated_at = yyyyMMdd + ' ' + hhmmss
+        }
+      }
+      return data
     },
     // 修改取消
     cancle() {
@@ -181,14 +201,7 @@ export default {
             const data = res.data
             if (data[0].updated_at.indexOf('.') !== -1) {
               // 把带T的时间转为正常的时间格式 yyyy-mm-dd hh:mm:ss
-              for (let i = 0; i < data.length; i++) {
-                const time = data[i].updated_at
-                if (time) {
-                  const yyyyMMdd = time.split('T')[0]
-                  const hhmmss = time.split('T')[1].split('.')[0]
-                  data[i].updated_at = yyyyMMdd + ' ' + hhmmss
-                }
-              }
+              this.DateParse(data)
             }
             this.lists = res.data
           }
@@ -197,36 +210,42 @@ export default {
       })
     },
     // 修改机器人的消息
-    changeText(item) {
-      this.dialogFormVisible = true
-      this.sessions.name = item.assistant_content
-      this.chatId = item.id
+    changeText(index) {
+      let arr = []
+      history(this.msgId).then(res => {
+        arr = res.data
+        arr = this.DateParse(arr)
+        this.lists = arr
+        const item = this.lists[index]
+        this.dialogFormVisible = true
+        this.sessions.name = item.assistant_content
+        this.chatId = item.id
+      })
     },
     // 删除会话
-    handleConfirm(id) {
-      console.log(id)
-      deleteChat(id).then(res => {
-        history(this.msgId).then(res => {
-          if (res.data === [] || res.data === undefined || res.data.length === 0) {
-            this.lists = []
-            return
-          } else {
-            const data = res.data
-            if (data[0].updated_at.indexOf('.') !== -1) {
-              // 把带T的时间转为正常的时间格式 yyyy-mm-dd hh:mm:ss
-              for (let i = 0; i < data.length; i++) {
-                const time = data[i].updated_at
-                if (time) {
-                  const yyyyMMdd = time.split('T')[0]
-                  const hhmmss = time.split('T')[1].split('.')[0]
-                  data[i].updated_at = yyyyMMdd + ' ' + hhmmss
-                }
+    handleConfirm(index) {
+      let arr = []
+      history(this.msgId).then(res => {
+        arr = res.data
+        arr = this.DateParse(arr)
+        this.lists = arr
+        const list = this.lists
+        const id = list[index].id
+        deleteChat(id).then(res => {
+          history(this.msgId).then(res => {
+            if (res.data === [] || res.data === undefined || res.data.length === 0) {
+              this.lists = []
+              return
+            } else {
+              const data = res.data
+              if (data[0].updated_at.indexOf('.') !== -1) {
+                this.DateParse(data)
               }
+              this.lists = res.data
             }
-            this.lists = res.data
-          }
+          })
+          this.$message.success('删除成功')
         })
-        this.$message.success('删除成功')
       })
     }
   }

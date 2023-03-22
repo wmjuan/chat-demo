@@ -207,7 +207,9 @@ export default {
     },
     // 点击每个会话
     hangleClick(id) {
-      bus.$emit('msgID', id)
+      setTimeout(() => {
+        bus.$emit('msgID', id)
+      }, 100)
       this.sessionid = id
       this.isshow = true
       const data = JSON.parse(localStorage.getItem(id))
