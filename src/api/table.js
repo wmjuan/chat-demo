@@ -26,25 +26,17 @@ export function history(id) {
   })
 }
 
-// 发送问题
-// export function send(data) {
+// 流式消息
+// export function send(params) {
 //   return request({
-//     url: '/messages',
-//     method: 'post',
-//     data
+//     url: '/messages/stream',
+//     method: 'get',
+//     params: {
+//       conversation_id: params.conversation_id,
+//       user_content: params.user_content
+//     }
 //   })
 // }
-
-export function send(params) {
-  return request({
-    url: '/messages/stream',
-    method: 'get',
-    params: {
-      conversation_id: params.conversation_id,
-      user_content: params.user_content
-    }
-  })
-}
 
 // 修改会话
 export const updataChat = ({ id, data }) => request({
@@ -62,5 +54,18 @@ export const deleteSession = id => request({
 export const checkSession = id => request({
   url: API.CHECK_API.replace('{id}', id),
   method: 'get'
+})
+
+// 删除某一条消息
+export const deleteChat = id => request({
+  url: API.CHAI_API.replace('{id}', id),
+  method: 'delete'
+})
+
+// 修改某一条消息
+export const updataMessage = ({ id, data }) => request({
+  url: API.UPSESSION_API.replace('{id}', id),
+  method: 'put',
+  data
 })
 

@@ -5,7 +5,7 @@
       <el-dialog style="height: 50%" :visible.sync="dialogFormVisible" :before-close="cancle" title="修改会话名称" width="30%">
         <el-form :model="form" @submit.native.prevent>
           <el-form-item label="会话名称：" :label-width="formLabelWidth">
-            <el-input v-model="form.name" clearable autocomplete="off" placeholder="请输入会话名称" clearable @keyup.enter.native="config()" />
+            <el-input v-model="form.name" clearable autocomplete="off" placeholder="请输入会话名称" @keyup.enter.native="config()" />
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer" style="margin-top: -20px">
@@ -17,7 +17,17 @@
         <i class="el-icon-chat-dot-square" />
         <span class="text">{{ item.name }}</span>
         <i class="el-icon-edit" style="cursor: pointer;position: absolute;right:30px;top:16px" @click.stop="updataChat(item.id)" />
-        <i class="el-icon-delete" style="cursor: pointer;position: absolute;right: 4px;top: 16px" @click.stop="deleteChat(item.id)" />
+        <el-popconfirm
+          title="确定删除吗？"
+          @onConfirm="successConfirm(item.id)"
+          @onCancel="successCancel()"
+        >
+          <i
+            slot="reference"
+            class="el-icon-delete"
+            style="cursor: pointer;position: absolute;right: 4px;top: 16px"
+          />
+        </el-popconfirm>
       </div>
     </div>
     <div v-if="isshow" class="right">
@@ -31,15 +41,11 @@
     <div
       ref="fu"
       class="callback float"
-      @mousedown="down"
-      @mousemove="move"
-      @mouseup="end"
-      @click="show"
     >
       <img src="../../assets/eff.jpg">
     </div>
     <el-dialog
-      :close-on-click-modal='false'
+      :close-on-click-modal="false"
       :visible.sync="dialogVisible"
       width="80%"
       top="50vh"
@@ -75,24 +81,105 @@ export default {
       updataid: null,
       sessionDetails: [],
       sessionid: 0,
-      isshow: false,
-      flags: false, // 控制使用
-      position: {
-        x: 0,
-        y: 0
-      },
-      nx: '',
-      ny: '',
-      dx: '',
-      dy: '',
-      xPum: '',
-      yPum: ''
+      isshow: false
     }
   },
   created() {
     this.$nextTick(() => {
       this.renderlist()
     })
+  },
+  mounted() {
+    // 监听悬浮拖拽区域
+    // this.$nextTick(() => {
+    //   // 获取DOM元素
+    //   const smallBox = this.$refs.fu
+    //   const bigBox = document.querySelector('.dashboard')
+    //   //  绑定事件
+    //   function handleMove(e) {
+    //     console.log(11)
+    //     // 计算  x  y
+    //     var e = e || window.event
+    //     var x = e.clientX - bigBox.offsetLeft - 20
+    //     var y = e.clientY - bigBox.offsetTop - 20
+    //     //  判断上 左
+    //     if (x <= 0) {
+    //       x = 0
+    //     }
+    //     if (y <= 0) {
+    //       y = 0
+    //     }
+    //     // 判断右 下
+    //     if (x >= bigBox.offsetWidth - smallBox.offsetWidth) {
+    //       x = bigBox.offsetWidth - smallBox.offsetWidth + 48
+    //     }
+    //     if (y >= bigBox.offsetHeight - smallBox.offsetHeight) {
+    //       y = bigBox.offsetHeight - smallBox.offsetHeight + 48
+    //     }
+    //     smallBox.style.top = y + 'px'
+    //     smallBox.style.left = x + 'px'
+    //   }
+    //   smallBox.addEventListener('mousedown', function(e) {
+    //     document.addEventListener('mousemove', handleMove)
+    //   })
+    //   document.addEventListener('mouseup', function() {
+    //     document.removeEventListener('mousemove', handleMove)
+    //   })
+    // })
+
+    const box = this.$refs.fu
+    // 获取浏览器的尺寸
+    var window_width = document.body.clientWidth || document.documentElement.clientWidth
+    var window_height = document.body.clientHeight || document.documentElement.clientHeight
+    // 获取box的尺寸
+    var box_width = box.offsetWidth
+    var box_height = box.offsetHeight
+    // 给box绑定按下事件
+    box.onmousedown = function(e) {
+      console.log('我被按下了')
+      var e = e || window.event
+      //  按下的时候  可以获取按下的位置 在元素中的位置
+      var l = e.offsetX
+      var t = e.offsetY
+      //  在鼠标移动的时候  可以绑定给其他的元素 如 document
+      document.onmousemove = function(e) {
+        console.log('我移动了')
+        var e = e || window.event
+        // 获取鼠标移动的坐标
+        //  鼠标一直在按下的位置
+        // var x = e.pageX - l
+        // var y = e.pageY - t
+        // 鼠标一直在中间位置
+        var x = e.pageX - box.offsetWidth / 2
+        var y = e.pageY - box.offsetHeight / 2
+        // 判断左边和上边
+        if (x <= 50) {
+          x = 0
+        } else if (x >= window_width - box_width - 50) {
+          x = window_width - box_width
+        }
+        if (y <= 50) {
+          y = 0
+        } else if (y >= window_height - box_height - 50) {
+          y = window_height - box_height
+        }
+        //  判断下边和右边
+        if (x >= window_width - box_width - 50) {
+          x = window_width - box_width
+        }
+        if (y >= window_height - box_height - 50) {
+          y = window_height - box_height
+        }
+        // 2-5 改变div的位置
+        box.style.left = x + 'px'
+        box.style.top = y + 'px'
+      }
+      // 2-3 绑定抬起事件 取消移动事件
+      box.onmouseup = function() {
+        console.log('我被抬起了')
+        document.onmousemove = null
+      }
+    }
   },
   methods: {
     toggle(index) {
@@ -120,6 +207,7 @@ export default {
     },
     // 点击每个会话
     hangleClick(id) {
+      bus.$emit('msgID', id)
       this.sessionid = id
       this.isshow = true
       const data = JSON.parse(localStorage.getItem(id))
@@ -131,11 +219,9 @@ export default {
       //   data = []
       //   bus.$emit('sengmess', data)
       // }
-
       // 根据每个会话id 查询所有的历史记录
       history(this.sessionid).then(res => {
         // 把历史记录传给 message 组件中
-        bus.$emit('msgID', id)
         bus.$emit('history', res.data)
       })
     },
@@ -150,39 +236,35 @@ export default {
         this.hangleClick(res.data.id)
       })
     },
-    // 取消新建/修改
+    // 取消修改
     cancle() {
       this.dialogFormVisible = false
       this.form.name = ''
     },
-    // 删除会话
-    deleteChat(id) {
-      this.$confirm('是否确认删除？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        deleteSession(id).then(res => {
-          this.renderlist()
-          const num = []
-          this.list.forEach(function(item, index) {
-            num.push(item.id)
-          })
-          if (num[0] === id && this.list.length === 1) {
-            this.isshow = false
-            this.active = -1
-          } else if (num[0] === id && this.list.length !== 1) {
-            this.hangleClick(num[1])
-          } else {
-            this.hangleClick(num[0])
-          }
-          this.active = 0
+    // 删除
+    successConfirm(id) {
+      deleteSession(id).then(res => {
+        this.renderlist()
+        const num = []
+        this.list.forEach(function(item, index) {
+          num.push(item.id)
         })
-      }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: '已取消删除'
-        })
+        if (num[0] === id && this.list.length === 1) {
+          this.isshow = false
+          this.active = -1
+        } else if (num[0] === id && this.list.length !== 1) {
+          this.hangleClick(num[1])
+        } else {
+          this.hangleClick(num[0])
+        }
+        this.active = 0
+      })
+    },
+    // 取消删除
+    successCancel() {
+      this.$message({
+        type: 'info',
+        message: '已取消删除'
       })
     },
     // 更改会话名称
@@ -193,49 +275,6 @@ export default {
       checkSession(id).then(res => {
         this.form.name = res.data.name
       })
-    },
-    down() {
-      console.log(1)
-      this.flags = true
-      var touch
-      if (event.touches) {
-        touch = event.touches[0]
-      } else {
-        touch = event
-      }
-      this.position.x = touch.clientX
-      this.position.y = touch.clientY
-      this.dx = this.$refs.fu.offsetLeft
-      this.dy = this.$refs.fu.offsetTop
-      this.move()
-    },
-    move() {
-      console.log(2)
-      if (this.flags) {
-        var touch
-        if (event.touches) {
-          touch = event.touches[0]
-        } else {
-          touch = event
-        }
-        this.nx = touch.clientX - this.position.x
-        this.ny = touch.clientY - this.position.y
-        this.xPum = this.dx + this.nx
-        this.yPum = this.dy + this.ny
-        const width = window.innerWidth - this.$refs.fu.offsetWidth // 屏幕宽度减去自身控件宽度
-        const height = window.innerHeight - this.$refs.fu.offsetHeight // 屏幕高度减去自身控件高度
-        this.xPum < 0 && (this.xPum = 0)
-        this.yPum < 0 && (this.yPum = 0)
-        this.xPum > width && (this.xPum = width)
-        this.yPum > height && (this.yPum = height)
-        this.$refs.fu.style.left = this.xPum + 'px'
-        this.$refs.fu.style.top = this.yPum + 'px'
-      }
-    },
-    // 鼠标释放时候的函数
-    end() {
-      this.flags = false
-      this.move()
     },
     show() {
       this.dialogVisible = !this.dialogVisible
@@ -291,7 +330,7 @@ export default {
     font-size: 14px;
     text-align: center;
     //margin-left: 54px;
-    padding-left: 30px;
+    padding-left: 26px;
   }
     .left{
       width:18%;
@@ -313,6 +352,7 @@ export default {
         cursor: pointer;
         margin-top: 10px;
         padding: 4px;
+        padding-left: 16px;
         height: 50px;
         line-height: 40px;
         position: relative;

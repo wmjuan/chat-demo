@@ -6,8 +6,13 @@
         <div class="chatMsgContent" style="position: relative">
           <div class="chatContent" style="margin-right: 34px;background-color: #d3f8d3">{{ item.user_content }}
             <i class="el-icon-document-copy" @click="userClickCopy(item,index)" />
-            <i class="el-icon-edit" />
-            <i class="el-icon-delete" />
+            <!--            <i class="el-icon-edit" @click="changeUser(item)"/>-->
+            <el-popconfirm
+              title="确定删除吗？"
+              @onConfirm="handleConfirm(item.id)"
+            >
+              <i slot="reference" class="el-icon-delete" />
+            </el-popconfirm>
           </div>
           <el-avatar class="chat" :size="30" style="margin-top: -28px" src="https://goflychat.oss-cn-hangzhou.aliyuncs.com/static/upload/avator/2022June/32a988a3c2f8700119fa1f5da1b6a4bd.png" />
         </div>
@@ -19,19 +24,24 @@
           <div id="chat" class="chatContent" style="background-color: #f5f5f5">
             <VueMarkdown :source="item.assistant_content" />
             <i class="el-icon-document-copy" @click="clickCopy(item,index)" />
-            <i slot="reference" class="el-icon-edit" @click="changeText(item.id)" />
-            <el-popover
-              v-model="visible"
-              placement="bottom"
-              width="160"
-            >
-              <p>这是一段内容这是一段内容确定删除吗？</p>
-              <div style="text-align: right; margin: 0">
-                <el-button size="mini" type="text" @click="visible = false">取消</el-button>
-                <el-button type="primary" size="mini" @click="visible = false">确定</el-button>
+            <el-dialog style="height: 50%" :visible.sync="dialogFormVisible" :before-close="cancle" title="修改消息内容" width="40%">
+              <el-form :model="sessions" @submit.native.prevent>
+                <el-form-item label="消息内容：" :label-width="formLabelWidth">
+                  <el-input v-model="sessions.name" clearable autocomplete="off" placeholder="输入修改的消息内容" @keyup.enter.native="handleSubmit()" />
+                </el-form-item>
+              </el-form>
+              <div slot="footer" class="dialog-footer" style="margin-top: -20px">
+                <el-button @click="cancle">取 消</el-button>
+                <el-button type="primary" @click="handleSubmit()">确 定</el-button>
               </div>
-            </el-popover>
-            <i class="el-icon-delete" />
+            </el-dialog>
+            <el-popconfirm
+              title="确定删除吗？"
+              @onConfirm="handleConfirm(item.id)"
+            >
+              <i slot="reference" class="el-icon-delete" />
+            </el-popconfirm>
+            <i class="el-icon-edit" @click="changeText(item)" />
           </div>
         </div>
       </div>
@@ -41,7 +51,7 @@
 
 <script>
 import bus from '../../../bus'
-import { history } from '@/api/table'
+import { history, deleteChat, updataMessage } from '@/api/table'
 import VueMarkdown from 'vue-markdown'
 export default {
   name: 'Message',
@@ -54,7 +64,13 @@ export default {
       userId: '',
       msgId: '',
       lists: [],
-      visible: false
+      visible: false,
+      dialogFormVisible: false,
+      sessions: {
+        name: ''
+      },
+      formLabelWidth: '120px',
+      chatId: ''
     }
   },
   mounted() {
@@ -119,19 +135,10 @@ export default {
         //   }
         // }, 500)
       })
-      // 每个会话id 的消息记录
-      // bus.$on('sengmess', data => {
-      //   // 因为data在没有缓存的时候是[]，所以需要处理data.lists,如果data为空数组，给定this.lists也为空
-      //   if (data === []) {
-      //     this.lists = []
-      //     return
-      //   } else {
-      //     this.lists = data
-      //   }
-      // })
+      // 因为data在没有缓存的时候是[]，所以需要处理data.lists,如果data为空数组，给定this.lists也为空
       // 接收每个会话id 的历史记录
       bus.$on('history', data => {
-        if (data === []) {
+        if (data === [] || data === undefined || data.length === 0) {
           this.lists = []
           return
         } else {
@@ -154,8 +161,73 @@ export default {
         this.lists[this.lists.length - 1]['assistant_content'] = JSON.parse(data)['content']
       })
     },
-    changeText(id) {
-      this.visible = true
+    // 修改取消
+    cancle() {
+      this.dialogFormVisible = false
+    },
+    // 修改确定
+    handleSubmit() {
+      this.dialogFormVisible = false
+      const data = {
+        'assistant_content': this.sessions.name
+      }
+      const id = this.chatId
+      updataMessage({ id, data }).then(res => {
+        history(this.msgId).then(res => {
+          if (res.data === [] || res.data === undefined || res.data.length === 0) {
+            this.lists = []
+            return
+          } else {
+            const data = res.data
+            if (data[0].updated_at.indexOf('.') !== -1) {
+              // 把带T的时间转为正常的时间格式 yyyy-mm-dd hh:mm:ss
+              for (let i = 0; i < data.length; i++) {
+                const time = data[i].updated_at
+                if (time) {
+                  const yyyyMMdd = time.split('T')[0]
+                  const hhmmss = time.split('T')[1].split('.')[0]
+                  data[i].updated_at = yyyyMMdd + ' ' + hhmmss
+                }
+              }
+            }
+            this.lists = res.data
+          }
+        })
+        this.$message.success('修改成功')
+      })
+    },
+    // 修改机器人的消息
+    changeText(item) {
+      this.dialogFormVisible = true
+      this.sessions.name = item.assistant_content
+      this.chatId = item.id
+    },
+    // 删除会话
+    handleConfirm(id) {
+      console.log(id)
+      deleteChat(id).then(res => {
+        history(this.msgId).then(res => {
+          if (res.data === [] || res.data === undefined || res.data.length === 0) {
+            this.lists = []
+            return
+          } else {
+            const data = res.data
+            if (data[0].updated_at.indexOf('.') !== -1) {
+              // 把带T的时间转为正常的时间格式 yyyy-mm-dd hh:mm:ss
+              for (let i = 0; i < data.length; i++) {
+                const time = data[i].updated_at
+                if (time) {
+                  const yyyyMMdd = time.split('T')[0]
+                  const hhmmss = time.split('T')[1].split('.')[0]
+                  data[i].updated_at = yyyyMMdd + ' ' + hhmmss
+                }
+              }
+            }
+            this.lists = res.data
+          }
+        })
+        this.$message.success('删除成功')
+      })
     }
   }
 }
@@ -224,7 +296,7 @@ export default {
 .el-icon-edit{
   position: absolute;
   top: -2px;
-  right: 20px;
+  right: 40px;
   font-size: 12px;
   background-color: rgba(243, 243, 245,0.5);
   cursor: pointer;
@@ -232,7 +304,7 @@ export default {
 .el-icon-delete{
   position: absolute;
   top: -2px;
-  right: 40px;
+  right: 20px;
   font-size: 12px;
   background-color: rgba(243, 243, 245,0.5);
   cursor: pointer;
