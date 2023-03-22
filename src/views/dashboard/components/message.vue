@@ -150,8 +150,7 @@ export default {
         //   }
         // }, 500)
       })
-      // 因为data在没有缓存的时候是[]，所以需要处理data.lists,如果data为空数组，给定this.lists也为空
-      // 接收每个会话id 的历史记录
+      // 因为data在没有缓存的时候是[]，所以需要处理data.lists,如果data为空数组，给定this.lists也为空  接收每个会话id 的历史记录
       bus.$on('history', data => {
         if (data === [] || data === undefined || data.length === 0) {
           this.lists = []
